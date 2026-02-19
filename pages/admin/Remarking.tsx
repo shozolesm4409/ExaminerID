@@ -41,10 +41,15 @@ const Remarking: React.FC = () => {
   // Notification State
   const [notification, setNotification] = useState<{message: string, type: 'success' | 'error' | 'warning'} | null>(null);
 
-  // Modal State
-  const [modalOpen, setModalOpen] = useState(false);
-  const [modalContent, setModalContent] = useState<string | null>(null);
-  const [modalType, setModalType] = useState<'image' | 'doc'>('image');
+  // View Modal State
+  const [viewModalOpen, setViewModalOpen] = useState(false);
+  const [viewModalContent, setViewModalContent] = useState<string | null>(null);
+  const [viewModalType, setViewModalType] = useState<'image' | 'doc'>('image');
+
+  // Confirmation Modal State
+  const [confirmModalOpen, setConfirmModalOpen] = useState(false);
+  const [examinerToApprove, setExaminerToApprove] = useState<ExaminerData | null>(null);
+  const [approving, setApproving] = useState(false);
 
   // Fetch from the temporary 'applications' collection
   const fetchPending = async () => {
@@ -65,10 +70,10 @@ const Remarking: React.FC = () => {
     fetchPending();
   }, []);
 
-  const openModal = (content: string, type: 'image' | 'doc') => {
-      setModalContent(content);
-      setModalType(type);
-      setModalOpen(true);
+  const openViewModal = (content: string, type: 'image' | 'doc') => {
+      setViewModalContent(content);
+      setViewModalType(type);
+      setViewModalOpen(true);
   };
 
   // Handle Input Change for Inline Editing
@@ -78,21 +83,12 @@ const Remarking: React.FC = () => {
     ));
   };
 
-  // Move data from 'applications' to 'examiners' collection
-  const handleApprove = async (data: ExaminerData) => {
+  // Step 1: Click Approve -> Validates and Opens Modal
+  const handleApproveClick = (data: ExaminerData) => {
     if(!data.id) return;
-
-    // Reset previous notifications
     setNotification(null);
 
-    // 1. Determine Status
-    // If user hasn't selected a status (still Pending), assume they mean 'Approved' by clicking the button.
-    let targetStatus = data.status;
-    if (targetStatus === 'Pending' || !targetStatus) {
-        targetStatus = 'Approved';
-    }
-
-    // 2. Check if RM is provided
+    // Check if RM is provided
     if (!data.rm || data.rm.trim() === '') {
         const msg = "Action Required: The 'Rm' field is empty. Please enter a value in the Rm column before approving.";
         setNotification({ type: 'warning', message: msg });
@@ -100,57 +96,48 @@ const Remarking: React.FC = () => {
         return;
     }
 
-    // Auto-assign Admin Email to 'remarkedBy'
-    const currentUserEmail = auth.currentUser?.email || 'shozolesm4409@gmail.com';
+    // Set data for modal and open it
+    setExaminerToApprove(data);
+    setConfirmModalOpen(true);
+  };
 
-    // Confirmation
-    const confirmMsg = `Confirm Transfer?\n\nStatus: ${targetStatus}\nRM: ${data.rm}\nAdmin: ${currentUserEmail}`;
-    if(!window.confirm(confirmMsg)) {
-        return;
-    }
-
+  // Step 2: Confirm in Modal -> Executes Database Transfer
+  const executeApproval = async () => {
+    if (!examinerToApprove || !examinerToApprove.id) return;
+    
+    setApproving(true);
+    const data = examinerToApprove;
+    
     try {
+        // Determine Status
+        let targetStatus = data.status;
+        if (targetStatus === 'Pending' || !targetStatus) {
+            targetStatus = 'Approved';
+        }
+
+        const currentUserEmail = auth.currentUser?.email || 'shozolesm4409@gmail.com';
+
         // 0. Auto-Generate SL (Serial Number) based on Examiner Records
+        // Robust Method: Fetch all examiners and find the numerical max
+        // This avoids issues where Firestore sorts strings "9" > "62"
         let newSl = 1;
-        
         try {
-            // This query requires an Index in Firestore.
-            const slQuery = query(collection(db, 'examiners'), orderBy('sl', 'desc'), limit(1));
-            const slSnap = await getDocs(slQuery);
+            const querySnapshot = await getDocs(collection(db, 'examiners'));
+            let maxSl = 0;
             
-            if (!slSnap.empty) {
-                const lastData = slSnap.docs[0].data();
-                const lastSl = Number(lastData.sl);
-                if (!isNaN(lastSl)) {
-                     newSl = lastSl + 1;
+            querySnapshot.forEach((doc) => {
+                const d = doc.data();
+                const slVal = Number(d.sl);
+                if (!isNaN(slVal) && slVal > maxSl) {
+                    maxSl = slVal;
                 }
-            }
+            });
+            
+            newSl = maxSl + 1;
+            console.log(`Calculated Max SL: ${maxSl}, Assigning New SL: ${newSl}`);
         } catch (slError: any) {
             console.error("SL Generation Error:", slError);
-            if (slError.message.includes('index')) {
-                // Show critical error with instructions
-                const link = slError.message.match(/https:\/\/console\.firebase\.google\.com[^\s]*/)?.[0];
-                const msg = "SYSTEM ERROR: Firestore Index Missing. You must create an index to generate Serial Numbers (SL). Check the console (F12) for the link.";
-                
-                setNotification({ 
-                    type: 'error', 
-                    message: `MISSING INDEX: The database cannot sort by SL. Open Console (F12) and click the link generated by Firebase to fix this. \n\nTechnical Error: ${slError.message}` 
-                });
-                
-                if (link) {
-                    console.log("%c CLICK HERE TO CREATE INDEX: ", "background: red; color: white; font-size: 20px", link);
-                    window.open(link, '_blank'); // Try to open automatically
-                }
-                
-                alert("DATABASE ERROR: Missing Index. Look at the top of the page for details.");
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-                return; // STOP execution to prevent corrupt data
-            } else {
-                console.warn("SL Error (Non-Index):", slError);
-                // Fallback? No, safer to alert.
-                alert("Error calculating SL: " + slError.message);
-                return;
-            }
+            alert("Warning: Could not calculate SL from existing records. Defaulting to 1. Error: " + slError.message);
         }
 
         // 1. Create new doc reference in 'examiners'
@@ -158,8 +145,6 @@ const Remarking: React.FC = () => {
         
         // 2. Prepare data
         const { id, ...rest } = data;
-        
-        // Sanitize - Ensure no undefined values
         const sanitizedData = JSON.parse(JSON.stringify(rest));
 
         const finalData = { 
@@ -185,15 +170,16 @@ const Remarking: React.FC = () => {
             message: `Success! Examiner transferred to Records. Assigned SL: ${newSl}.` 
         });
         setPending(prev => prev.filter(p => p.id !== data.id));
+        setConfirmModalOpen(false);
+        setExaminerToApprove(null);
         
         window.scrollTo({ top: 0, behavior: 'smooth' });
 
     } catch (err: any) {
         console.error("Approval error:", err);
-        const failMsg = "Database Transfer Failed: " + err.message;
-        setNotification({ type: 'error', message: failMsg });
-        alert(failMsg); 
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+        setNotification({ type: 'error', message: "Database Transfer Failed: " + err.message });
+    } finally {
+        setApproving(false);
     }
   };
 
@@ -319,12 +305,72 @@ const Remarking: React.FC = () => {
         </div>
       )}
 
+      {/* File View Modal */}
       <ViewModal 
-        isOpen={modalOpen} 
-        content={modalContent} 
-        type={modalType} 
-        onClose={() => setModalOpen(false)} 
+        isOpen={viewModalOpen} 
+        content={viewModalContent} 
+        type={viewModalType} 
+        onClose={() => setViewModalOpen(false)} 
       />
+
+      {/* Confirmation Modal */}
+      {confirmModalOpen && examinerToApprove && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black bg-opacity-60 backdrop-blur-sm p-4">
+          <div className="bg-white rounded-lg shadow-2xl max-w-md w-full p-6 transform scale-100 transition-all">
+            <h3 className="text-xl font-bold text-gray-900 mb-4 border-b pb-2">Confirm Transfer</h3>
+            
+            <div className="bg-blue-50 p-4 rounded border border-blue-100 mb-6 space-y-2">
+                <div className="flex justify-between">
+                    <span className="text-sm font-bold text-gray-600">Examiner:</span>
+                    <span className="text-sm font-bold text-brand-900">{examinerToApprove.nickName}</span>
+                </div>
+                <div className="flex justify-between">
+                    <span className="text-sm font-bold text-gray-600">Status:</span>
+                    <span className={`text-sm font-bold px-2 rounded ${examinerToApprove.status === 'Rejected' ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`}>
+                        {examinerToApprove.status === 'Pending' ? 'Approved' : examinerToApprove.status || 'Approved'}
+                    </span>
+                </div>
+                <div className="flex justify-between">
+                    <span className="text-sm font-bold text-gray-600">RM:</span>
+                    <span className="text-sm font-bold text-gray-800">{examinerToApprove.rm}</span>
+                </div>
+                <div className="flex justify-between">
+                    <span className="text-sm font-bold text-gray-600">Remarked By:</span>
+                    <span className="text-sm text-gray-800 truncate max-w-[150px]" title={auth.currentUser?.email || 'Admin'}>{auth.currentUser?.email || 'Admin'}</span>
+                </div>
+            </div>
+            
+            <p className="text-gray-500 text-sm mb-6">
+                Are you sure you want to move this application to the permanent <b>Examiner Records</b>? This action creates a new Serial Number (SL).
+            </p>
+            
+            <div className="flex justify-end gap-3 pt-2">
+                <button 
+                    onClick={() => setConfirmModalOpen(false)}
+                    className="px-4 py-2 bg-gray-200 text-gray-800 rounded hover:bg-gray-300 font-bold text-sm transition"
+                    disabled={approving}
+                >
+                    Cancel
+                </button>
+                <button 
+                    onClick={executeApproval}
+                    disabled={approving}
+                    className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 font-bold text-sm shadow transition flex items-center"
+                >
+                    {approving ? (
+                        <>
+                         <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                         </svg>
+                         Processing...
+                        </>
+                    ) : 'Yes, Confirm Transfer'}
+                </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="bg-white rounded-lg shadow w-full border border-gray-200 flex-grow overflow-hidden flex flex-col">
         <div className="overflow-auto max-h-[75vh]" style={{ maxWidth: '100%' }}>
@@ -346,7 +392,7 @@ const Remarking: React.FC = () => {
                 <tr key={item.id || rowIdx} className="hover:bg-yellow-50 transition duration-150">
                     <td className="px-3 py-2 whitespace-nowrap border-r border-gray-100 sticky left-0 bg-white z-10 shadow-sm border-b">
                         <button 
-                            onClick={() => handleApprove(item)} 
+                            onClick={() => handleApproveClick(item)} 
                             className="bg-green-600 text-white px-3 py-1.5 rounded shadow hover:bg-green-700 text-xs font-bold w-full transition transform active:scale-95"
                         >
                             Approve & Save
@@ -374,7 +420,7 @@ const Remarking: React.FC = () => {
                                     <div className="flex justify-center">
                                         {val ? (
                                             <button 
-                                              onClick={() => openModal(val, 'image')}
+                                              onClick={() => openViewModal(val, 'image')}
                                               className="bg-blue-100 text-blue-700 px-3 py-1 rounded text-xs hover:bg-blue-200 font-medium flex items-center"
                                             >
                                                 <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
@@ -386,7 +432,7 @@ const Remarking: React.FC = () => {
                                     <div className="flex justify-center">
                                         {val ? (
                                            <button 
-                                              onClick={() => openModal(val, 'doc')}
+                                              onClick={() => openViewModal(val, 'doc')}
                                               className="bg-purple-100 text-purple-700 px-3 py-1 rounded text-xs hover:bg-purple-200 font-medium flex items-center"
                                             >
                                                 <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
