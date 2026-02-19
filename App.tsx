@@ -13,6 +13,7 @@ import ExaminerRecord from './pages/admin/ExaminerRecord';
 import ContentManage from './pages/admin/ContentManage';
 import RegistrationManage from './pages/admin/RegistrationManage';
 import ExaminerSearch from './pages/admin/ExaminerSearch';
+import ViewProfile from './pages/admin/ViewProfile';
 import ExcelUpload from './pages/admin/ExcelUpload';
 import GenerateTPin from './pages/admin/GenerateTPin';
 
@@ -70,7 +71,16 @@ const App: React.FC = () => {
           <Route path="records" element={<ExaminerRecord />} />
           <Route path="management" element={<ContentManage />} />
           <Route path="registration-manage" element={<RegistrationManage />} />
+          
+          {/* View Profile (Read Only) */}
+          <Route path="view-profile" element={<ViewProfile />} />
+          
+          {/* Update Profile (Editable) */}
+          <Route path="update-profile" element={<ExaminerSearch />} />
+          
+          {/* Legacy route for safety, points to update */}
           <Route path="search" element={<ExaminerSearch />} />
+
           <Route path="generate-tpin" element={<GenerateTPin />} />
           <Route path="upload" element={<ExcelUpload />} />
         </Route>

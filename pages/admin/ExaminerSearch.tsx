@@ -235,7 +235,11 @@ const ExaminerSearch: React.FC = () => {
 
   return (
     <div className="max-w-7xl mx-auto pb-10">
-      <h2 className="text-2xl font-bold mb-6 text-brand-900">Search & Update Examiner</h2>
+      <div className="flex justify-between items-center mb-6">
+        <h2 className="text-2xl font-bold text-brand-900">
+            Update Examiner Profile
+        </h2>
+      </div>
 
       {/* Success Message Body - Single Row */}
       {successMessage && (
@@ -450,10 +454,10 @@ const ExaminerSearch: React.FC = () => {
                   <div className="bg-gray-50 p-3 rounded border border-gray-200">
                       <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Photo</label>
                       <input 
-                        type="file" 
-                        accept="image/*"
-                        onChange={(e) => handleFileChange(e, 'photoUrl')} 
-                        className="w-full text-xs text-gray-500 mb-2"
+                            type="file" 
+                            accept="image/*"
+                            onChange={(e) => handleFileChange(e, 'photoUrl')} 
+                            className="w-full text-xs text-gray-500 mb-2"
                       />
                       <input name="photoUrl" value={result.photoUrl || ''} onChange={handleChange} className="w-full border border-gray-300 bg-white text-gray-900 rounded px-3 py-2 text-sm" placeholder="Paste URL directly if preferred" />
                       {result.photoUrl && (
@@ -466,10 +470,10 @@ const ExaminerSearch: React.FC = () => {
                   <div className="bg-gray-50 p-3 rounded border border-gray-200">
                       <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Document</label>
                       <input 
-                        type="file" 
-                        accept=".pdf,.doc,.docx,image/*"
-                        onChange={(e) => handleFileChange(e, 'documentLink')} 
-                        className="w-full text-xs text-gray-500 mb-2"
+                            type="file" 
+                            accept=".pdf,.doc,.docx,image/*"
+                            onChange={(e) => handleFileChange(e, 'documentLink')} 
+                            className="w-full text-xs text-gray-500 mb-2"
                       />
                       <input name="documentLink" value={result.documentLink || ''} onChange={handleChange} className="w-full border border-gray-300 bg-white text-gray-900 rounded px-3 py-2 text-sm" placeholder="Paste URL directly if preferred" />
                       {result.documentLink && (
@@ -485,12 +489,12 @@ const ExaminerSearch: React.FC = () => {
 
             <div className="mt-8 flex justify-end sticky bottom-4">
                 <button 
-                  type="submit" 
-                  disabled={updating}
-                  className="bg-green-600 text-white px-8 py-4 rounded-lg font-bold hover:bg-green-700 shadow-xl transform transition hover:-translate-y-1 flex items-center text-lg"
+                type="submit" 
+                disabled={updating}
+                className="bg-green-600 text-white px-8 py-4 rounded-lg font-bold hover:bg-green-700 shadow-xl transform transition hover:-translate-y-1 flex items-center text-lg"
                 >
-                  <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" /></svg>
-                  {updating ? 'Saving Changes...' : 'Update Examiner Data'}
+                <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" /></svg>
+                {updating ? 'Saving Changes...' : 'Update Examiner Data'}
                 </button>
             </div>
           </div>
