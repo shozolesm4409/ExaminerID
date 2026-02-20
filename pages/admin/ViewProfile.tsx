@@ -89,7 +89,7 @@ const ViewProfile: React.FC = () => {
     return (
       <tr className="border-b border-gray-200 hover:bg-gray-50 text-sm">
         <td className="py-2 px-4 font-bold text-gray-700">{subject} (%)</td>
-        <td className={`py-2 px-4 text-center ${isAllow ? 'text-gray-800' : 'text-gray-600'}`}>
+        <td className={`py-2 px-4 text-center font-bold ${color}`}>
             {markDisplay}
         </td>
         <td className="py-2 px-4 text-center text-gray-600">{date || ''}</td>
