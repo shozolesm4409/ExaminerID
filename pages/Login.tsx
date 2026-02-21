@@ -69,49 +69,57 @@ const Login: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100 px-4">
-      <div className="bg-white p-8 rounded shadow-lg w-full max-w-md">
-        <h2 className="text-2xl font-bold mb-6 text-center text-brand-900">Admin Login</h2>
+    <div className="min-h-screen flex items-center justify-center bg-white px-4">
+      <div className="bg-white rounded border border-gray-300 shadow-sm w-full max-w-lg overflow-hidden">
+        {/* Header */}
+        <div className="bg-gray-50 border-b border-gray-200 py-4 text-center">
+          <h2 className="text-xl text-gray-700 font-normal">Log in</h2>
+        </div>
         
-        {error && (
-          <div className="bg-red-50 border-l-4 border-red-500 p-4 mb-4">
-            <p className="text-red-700 text-sm">{error}</p>
-          </div>
-        )}
+        {/* Body */}
+        <div className="p-8">
+          {error && (
+            <div className="bg-red-50 border-l-4 border-red-500 p-4 mb-6">
+              <p className="text-red-700 text-sm">{error}</p>
+            </div>
+          )}
 
-        <form onSubmit={handleLogin} className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Email</label>
-            <input 
-              type="email" 
-              value={email} 
-              onChange={(e) => setEmail(e.target.value)} 
-              className="w-full mt-1 border border-gray-300 rounded px-3 py-2 focus:ring-brand-500 focus:border-brand-500"
-              required
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Password</label>
-            <input 
-              type="password" 
-              value={password} 
-              onChange={(e) => setPassword(e.target.value)} 
-              className="w-full mt-1 border border-gray-300 rounded px-3 py-2 focus:ring-brand-500 focus:border-brand-500"
-              required
-              placeholder="Enter password"
-            />
-          </div>
-          <button 
-            type="submit" 
-            disabled={loading}
-            className="w-full bg-brand-600 text-white py-2 rounded hover:bg-brand-700 transition disabled:opacity-50"
-          >
-            {loading ? 'Logging in...' : 'Login'}
-          </button>
-        </form>
-        
-        <div className="mt-4 text-center text-xs text-gray-400">
-           <p>Only authorized administrators can access this panel.</p>
+          <form onSubmit={handleLogin} className="space-y-6">
+            <div className="grid grid-cols-[100px_1fr] gap-4 items-center">
+              <label className="text-right text-gray-800 font-bold text-sm">User Email</label>
+              <input 
+                type="email" 
+                value={email} 
+                onChange={(e) => setEmail(e.target.value)} 
+                className="w-full border border-gray-300 rounded px-3 py-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm"
+                required
+              />
+            </div>
+            
+            <div className="grid grid-cols-[100px_1fr] gap-4 items-center">
+              <label className="text-right text-gray-800 font-bold text-sm">Password</label>
+              <input 
+                type="password" 
+                value={password} 
+                onChange={(e) => setPassword(e.target.value)} 
+                className="w-full border border-gray-300 rounded px-3 py-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm"
+                required
+              />
+            </div>
+
+            <div className="grid grid-cols-[100px_1fr] gap-4">
+              <div></div> {/* Spacer */}
+              <div>
+                <button 
+                  type="submit" 
+                  disabled={loading}
+                  className="bg-[#337AB7] text-white px-6 py-2 rounded hover:bg-blue-700 transition disabled:opacity-50 font-medium text-sm shadow-sm"
+                >
+                  {loading ? 'Logging in...' : 'Log in'}
+                </button>
+              </div>
+            </div>
+          </form>
         </div>
       </div>
     </div>

@@ -102,4 +102,4 @@ export interface ContentItem {
   isVisible: boolean;
 }
 
-export const ADMIN_EMAIL = "shozolesm4409@gmail.com";
+export const ADMIN_EMAIL = "test.123@udvash.net";
