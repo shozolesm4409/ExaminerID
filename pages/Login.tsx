@@ -21,37 +21,50 @@ const Login: React.FC = () => {
       // If successful, navigate based on email
       navigate(cleanEmail === ADMIN_EMAIL ? '/admin' : '/');
     } catch (loginErr: any) {
-      // loginErr is generally a FirebaseError with 'code' and 'message'
       console.error("Login failed:", loginErr);
+
+      // Handle specific login errors
+      if (loginErr.code === 'auth/wrong-password') {
+        setError("Incorrect password.");
+        setLoading(false);
+        return;
+      }
       
-      // If login fails and it is the admin email, try to create the account
-      // This handles the "User doesn't exist yet" scenario transparently
-      if (cleanEmail === ADMIN_EMAIL) {
+      if (loginErr.code === 'auth/invalid-credential') {
+         setError("Invalid email or password.");
+         setLoading(false);
+         return;
+      }
+      
+      if (loginErr.code === 'auth/too-many-requests') {
+        setError("Too many failed attempts. Please try again later.");
+        setLoading(false);
+        return;
+      }
+
+      // Only try to create if the user was NOT FOUND and it is the admin email
+      if (loginErr.code === 'auth/user-not-found' && cleanEmail === ADMIN_EMAIL) {
         try {
           await auth.createUserWithEmailAndPassword(cleanEmail, password);
           // If creation successful, they are now logged in
           navigate('/admin');
         } catch (createErr: any) {
-          // If creation fails because email already exists, it means the password was wrong in the first place
-          if (createErr.code === 'auth/email-already-in-use') {
-            setError("Incorrect password.");
-          } else if (createErr.code === 'auth/weak-password') {
+          if (createErr.code === 'auth/weak-password') {
             setError("Password should be at least 6 characters.");
           } else {
-             // Fallback to showing the original login error or a generic one
-             setError("Login failed. Please check your credentials.");
+            setError("Failed to create admin account: " + createErr.message);
           }
+          setLoading(false);
         }
       } else {
-        // For non-admin emails, standard error handling
-        if (loginErr.code === 'auth/wrong-password' || loginErr.code === 'auth/user-not-found' || loginErr.code === 'auth/invalid-credential') {
-            setError("Invalid email or password.");
+        // For other errors or non-admin emails
+        if (loginErr.code === 'auth/user-not-found') {
+            setError("User not found.");
         } else {
-            setError("Error: " + loginErr.message);
+            setError("Login failed: " + loginErr.message);
         }
+        setLoading(false);
       }
-    } finally {
-      setLoading(false);
     }
   };
 

@@ -17,6 +17,8 @@ import ViewProfile from './pages/admin/ViewProfile';
 import ExcelUpload from './pages/admin/ExcelUpload';
 import GenerateTPin from './pages/admin/GenerateTPin';
 
+import FilterExaminer from './pages/admin/FilterExaminer';
+
 // Layout for public pages
 const PublicLayout = () => (
   <div className="flex flex-col min-h-screen">
@@ -83,6 +85,7 @@ const App: React.FC = () => {
 
           <Route path="generate-tpin" element={<GenerateTPin />} />
           <Route path="upload" element={<ExcelUpload />} />
+          <Route path="filter-examiner" element={<FilterExaminer />} />
         </Route>
       </Routes>
     </Router>

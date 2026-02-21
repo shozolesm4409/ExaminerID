@@ -68,10 +68,10 @@ const Navbar: React.FC = () => {
             
             {user ? (
                <div className="relative group ml-4">
-                 <button className="bg-brand-700 p-2 rounded-full hover:bg-brand-600 transition">
+                 <Link to="/admin" className="bg-brand-700 p-2 rounded-full hover:bg-brand-600 transition block">
                     <span className="sr-only">User</span>
                     <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
-                 </button>
+                 </Link>
                  <div className="absolute right-0 mt-2 w-48 bg-white text-gray-800 rounded-md shadow-lg py-1 hidden group-hover:block">
                     <div className="px-4 py-2 text-xs text-gray-500 border-b">Signed in as Admin</div>
                     <Link to="/admin" className="block px-4 py-2 hover:bg-gray-100">Dashboard</Link>

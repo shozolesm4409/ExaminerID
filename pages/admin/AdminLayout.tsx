@@ -40,17 +40,16 @@ const AdminLayout: React.FC = () => {
           <h2 className="text-2xl font-bold tracking-wider">Admin Panel</h2>
         </div>
         <nav className="mt-2 flex-grow space-y-1">
-          <Link to="/admin/remarking" className={`block px-6 py-1 transition-colors ${isActive('/admin/remarking')}`}>Remarking</Link>
-          <Link to="/admin/records" className={`block px-6 py-1 transition-colors ${isActive('/admin/records')}`}>Examiner Records</Link>
-                    
-          <Link to="/admin/view-profile" className={`block px-6 py-1 transition-colors ${isActive('/admin/view-profile')}`}>View Profile</Link>
-          <Link to="/admin/update-profile" className={`block px-6 py-1 transition-colors ${isActive('/admin/update-profile')}`}>Update Profile</Link>
-          
+          <Link to="/admin/remarking" className={`block px-6 py-.5 transition-colors ${isActive('/admin/remarking')}`}>Remarking</Link>
+          <Link to="/admin/records" className={`block px-6 py-.5 transition-colors ${isActive('/admin/records')}`}>Examiner Records</Link>
+          <Link to="/admin/filter-examiner" className={`block px-6 py-1 transition-colors ${isActive('/admin/filter-examiner')}`}>Filter Examiner</Link>
+        
+          <Link to="/admin/view-profile" className={`block px-6 py-.5 transition-colors ${isActive('/admin/view-profile')}`}>View Profile</Link>
+          <Link to="/admin/update-profile" className={`block px-6 py-.5 transition-colors ${isActive('/admin/update-profile')}`}>Update Profile</Link> 
           <Link to="/admin/generate-tpin" className={`block px-6 py-1 transition-colors ${isActive('/admin/generate-tpin')}`}>Generate T-Pin</Link>
-          <Link to="/admin/upload" className={`block px-6 py-1 transition-colors ${isActive('/admin/upload')}`}>Excel Upload</Link>
           
           <div className="my-2 border-t border-brand-800 opacity-50"></div>
-          
+          <Link to="/admin/upload" className={`block px-6 py-1 transition-colors ${isActive('/admin/upload')}`}>Excel Upload</Link>
           <Link to="/admin/registration-manage" className={`block px-6 py-1 transition-colors ${isActive('/admin/registration-manage')}`}>Registration Manage</Link>
           <Link to="/admin/management" className={`block px-6 py-1 transition-colors ${isActive('/admin/management')}`}>Content Manage</Link>
         </nav>
