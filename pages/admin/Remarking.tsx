@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { collection, query, getDocs, doc, writeBatch, orderBy, limit } from 'firebase/firestore';
+import { collection, query, getDocs, doc, writeBatch, orderBy, limit, deleteDoc } from 'firebase/firestore';
 import { db, auth } from '../../firebase';
 import { ExaminerData } from '../../types';
+import DeleteConfirmationModal from '../../components/DeleteConfirmationModal';
 
 // Modal Component for Viewing Files
 const ViewModal = ({ isOpen, content, type, onClose }: { isOpen: boolean, content: string | null, type: 'image' | 'doc', onClose: () => void }) => {
@@ -50,6 +51,15 @@ const Remarking: React.FC = () => {
   const [confirmModalOpen, setConfirmModalOpen] = useState(false);
   const [examinerToApprove, setExaminerToApprove] = useState<ExaminerData | null>(null);
   const [approving, setApproving] = useState(false);
+
+  // Delete Modal State
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [itemToDelete, setItemToDelete] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  // Approve All Modal State
+  const [approveAllModalOpen, setApproveAllModalOpen] = useState(false);
+  const [isApprovingAll, setIsApprovingAll] = useState(false);
 
   // Fetch from the temporary 'applications' collection
   const fetchPending = async () => {
@@ -180,6 +190,127 @@ const Remarking: React.FC = () => {
         setNotification({ type: 'error', message: "Database Transfer Failed: " + err.message });
     } finally {
         setApproving(false);
+    }
+  };
+
+  const handleDelete = (id: string) => {
+    setItemToDelete(id);
+    setDeleteModalOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!itemToDelete) return;
+    setIsDeleting(true);
+    try {
+      await deleteDoc(doc(db, 'applications', itemToDelete));
+      setPending(prev => prev.filter(item => item.id !== itemToDelete));
+      setNotification({ type: 'success', message: "Application deleted successfully." });
+      setDeleteModalOpen(false);
+      setItemToDelete(null);
+    } catch (error: any) {
+      console.error("Error deleting document: ", error);
+      setNotification({ type: 'error', message: "Failed to delete application: " + error.message });
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  const handleApproveAll = async () => {
+    // Validate that all pending items have RM value
+    const invalidItems = pending.filter(item => !item.rm || item.rm.trim() === '');
+    if (invalidItems.length > 0) {
+        const msg = `Action Required: ${invalidItems.length} application(s) have empty 'Rm' field. Please enter values for all items before approving all.`;
+        setNotification({ type: 'warning', message: msg });
+        alert(msg);
+        return;
+    }
+    setApproveAllModalOpen(true);
+  };
+
+  const confirmApproveAll = async () => {
+    setIsApprovingAll(true);
+    setNotification(null);
+    
+    try {
+        const currentUserEmail = auth.currentUser?.email || 'shozolesm4409@gmail.com';
+        
+        // 1. Get current max SL
+        let currentMaxSl = 0;
+        try {
+            const querySnapshot = await getDocs(collection(db, 'examiners'));
+            querySnapshot.forEach((doc) => {
+                const d = doc.data();
+                const slVal = Number(d.sl);
+                if (!isNaN(slVal) && slVal > currentMaxSl) {
+                    currentMaxSl = slVal;
+                }
+            });
+        } catch (slError: any) {
+            console.error("SL Generation Error:", slError);
+            alert("Warning: Could not calculate SL from existing records. Starting from 1.");
+        }
+
+        // 2. Process in batches (Firestore limit is 500 ops per batch)
+        const batchSize = 450; // Safe margin
+        const chunks = [];
+        for (let i = 0; i < pending.length; i += batchSize) {
+            chunks.push(pending.slice(i, i + batchSize));
+        }
+
+        let processedCount = 0;
+        let nextSl = currentMaxSl + 1;
+
+        for (const chunk of chunks) {
+            const batch = writeBatch(db);
+            
+            chunk.forEach((data) => {
+                if (!data.id) return;
+
+                // Determine Status
+                let targetStatus = data.status;
+                if (targetStatus === 'Pending' || !targetStatus) {
+                    targetStatus = 'Approved';
+                }
+
+                // Prepare new data
+                const newDocRef = doc(db, 'examiners', data.id);
+                const { id, ...rest } = data;
+                const sanitizedData = JSON.parse(JSON.stringify(rest));
+
+                const finalData = { 
+                    ...sanitizedData, 
+                    status: targetStatus,
+                    rm: data.rm,
+                    remarkedBy: currentUserEmail, 
+                    sl: nextSl, 
+                    lastUpdateDate: new Date().toISOString().split('T')[0],
+                    approvedAt: new Date().toISOString()
+                };
+
+                batch.set(newDocRef, finalData);
+                batch.delete(doc(db, 'applications', data.id));
+                
+                nextSl++;
+                processedCount++;
+            });
+
+            await batch.commit();
+        }
+
+        // 3. Update UI
+        setNotification({ 
+            type: 'success', 
+            message: `Success! Approved ${processedCount} applications. Added to Examiner Records.` 
+        });
+        setPending([]);
+        setApproveAllModalOpen(false);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+
+    } catch (err: any) {
+        console.error("Approve All Error:", err);
+        setNotification({ type: 'error', message: "Bulk Approval Failed: " + err.message });
+    } finally {
+        setIsApprovingAll(false);
     }
   };
 
@@ -372,6 +503,59 @@ const Remarking: React.FC = () => {
         </div>
       )}
 
+      {/* Delete Confirmation Modal */}
+      <DeleteConfirmationModal
+        isOpen={deleteModalOpen}
+        onClose={() => setDeleteModalOpen(false)}
+        onConfirm={confirmDelete}
+        isDeleting={isDeleting}
+        title="Delete Application"
+        message="Are you sure you want to permanently delete this application? This action cannot be undone."
+      />
+
+      {/* Approve All Confirmation Modal */}
+      {approveAllModalOpen && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black bg-opacity-60 backdrop-blur-sm p-4">
+          <div className="bg-white rounded-lg shadow-2xl max-w-md w-full p-6 transform scale-100 transition-all">
+            <h3 className="text-xl font-bold text-gray-900 mb-4 border-b pb-2">Confirm Bulk Approval</h3>
+            
+            <div className="bg-yellow-50 p-4 rounded border border-yellow-100 mb-6">
+                <p className="text-yellow-800 font-bold mb-2">Warning: You are about to approve {pending.length} applications.</p>
+                <ul className="list-disc list-inside text-sm text-yellow-700 space-y-1">
+                    <li>All {pending.length} applications will be moved to Examiner Records.</li>
+                    <li>New Serial Numbers (SL) will be generated for each.</li>
+                    <li>This action cannot be easily undone.</li>
+                </ul>
+            </div>
+            
+            <div className="flex justify-end gap-3 pt-2">
+                <button 
+                    onClick={() => setApproveAllModalOpen(false)}
+                    className="px-4 py-2 bg-gray-200 text-gray-800 rounded hover:bg-gray-300 font-bold text-sm transition"
+                    disabled={isApprovingAll}
+                >
+                    Cancel
+                </button>
+                <button 
+                    onClick={confirmApproveAll}
+                    disabled={isApprovingAll}
+                    className="px-4 py-2 bg-brand-600 text-white rounded hover:bg-brand-700 font-bold text-sm shadow transition flex items-center"
+                >
+                    {isApprovingAll ? (
+                        <>
+                         <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                         </svg>
+                         Processing...
+                        </>
+                    ) : 'Yes, Approve All'}
+                </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="bg-white rounded-lg shadow w-full border border-gray-200 flex-grow overflow-hidden flex flex-col">
         <div className="overflow-auto max-h-[75vh]" style={{ maxWidth: '100%' }}>
             <table className="min-w-max divide-y divide-gray-200 text-xs relative">
@@ -390,12 +574,21 @@ const Remarking: React.FC = () => {
             <tbody className="bg-white divide-y divide-gray-200">
                 {pending.map((item, rowIdx) => (
                 <tr key={item.id || rowIdx} className="hover:bg-yellow-50 transition duration-150">
-                    <td className="px-3 py-2 whitespace-nowrap border-r border-gray-100 sticky left-0 bg-white z-10 shadow-sm border-b">
+                    <td className="px-3 py-2 whitespace-nowrap border-r border-gray-100 sticky left-0 bg-white z-10 shadow-sm border-b flex gap-2">
                         <button 
                             onClick={() => handleApproveClick(item)} 
-                            className="bg-green-600 text-white px-3 py-1.5 rounded shadow hover:bg-green-700 text-xs font-bold w-full transition transform active:scale-95"
+                            className="bg-green-600 text-white px-3 py-1.5 rounded shadow hover:bg-green-700 text-xs font-bold flex-grow transition transform active:scale-95"
                         >
-                            Approve & Save
+                            Approve
+                        </button>
+                        <button
+                            onClick={() => handleDelete(item.id!)}
+                            className="bg-red-100 text-red-600 p-1.5 rounded hover:bg-red-200 transition"
+                            title="Delete"
+                        >
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
                         </button>
                     </td>
                     {columns.map((col, colIdx) => {
@@ -465,6 +658,21 @@ const Remarking: React.FC = () => {
             </table>
         </div>
       </div>
+      
+      {/* Approve All Button Footer */}
+      {pending.length > 0 && (
+        <div className="mt-4 flex justify-center pb-8">
+            <button 
+                onClick={handleApproveAll}
+                className="bg-brand-600 text-white px-4 py-2 rounded shadow hover:bg-brand-700 font-bold text-sm transition transform hover:scale-105 flex items-center gap-2"
+            >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                Approve All ({pending.length})
+            </button>
+        </div>
+      )}
     </div>
   );
 };

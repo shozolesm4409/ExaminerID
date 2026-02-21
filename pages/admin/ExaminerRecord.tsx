@@ -1,11 +1,107 @@
 import React, { useEffect, useState } from 'react';
-import { collection, query, where, getDocs } from 'firebase/firestore';
+import { collection, query, where, getDocs, deleteDoc, doc, writeBatch } from 'firebase/firestore';
 import { db } from '../../firebase';
 import { ExaminerData } from '../../types';
+import DeleteConfirmationModal from '../../components/DeleteConfirmationModal';
 
 const ExaminerRecord: React.FC = () => {
   const [records, setRecords] = useState<ExaminerData[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // Selection State
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+
+  // Delete Modal State
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [itemToDelete, setItemToDelete] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  // Bulk Delete Modal State
+  const [bulkDeleteModalOpen, setBulkDeleteModalOpen] = useState(false);
+  const [isBulkDeleting, setIsBulkDeleting] = useState(false);
+
+  const handleDelete = (id: string) => {
+    setItemToDelete(id);
+    setDeleteModalOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!itemToDelete) return;
+    setIsDeleting(true);
+    try {
+      await deleteDoc(doc(db, 'examiners', itemToDelete));
+      setRecords(prev => prev.filter(item => item.id !== itemToDelete));
+      setSelectedIds(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(itemToDelete);
+        return newSet;
+      });
+      setDeleteModalOpen(false);
+      setItemToDelete(null);
+    } catch (error: any) {
+      console.error("Error deleting document: ", error);
+      alert("Failed to delete record: " + error.message);
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  const handleSelectRow = (id: string) => {
+    setSelectedIds(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(id)) {
+        newSet.delete(id);
+      } else {
+        newSet.add(id);
+      }
+      return newSet;
+    });
+  };
+
+  const handleSelectAll = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.checked) {
+      const allIds = new Set(records.map(r => r.id!).filter(Boolean));
+      setSelectedIds(allIds);
+    } else {
+      setSelectedIds(new Set());
+    }
+  };
+
+  const handleBulkDelete = () => {
+    if (selectedIds.size === 0) return;
+    setBulkDeleteModalOpen(true);
+  };
+
+  const confirmBulkDelete = async () => {
+    setIsBulkDeleting(true);
+    try {
+      const batch = writeBatch(db);
+      const idsToDelete = Array.from(selectedIds);
+      
+      // Firestore batch limit is 500
+      const chunks = [];
+      for (let i = 0; i < idsToDelete.length; i += 500) {
+        chunks.push(idsToDelete.slice(i, i + 500));
+      }
+
+      for (const chunk of chunks) {
+        const batch = writeBatch(db);
+        chunk.forEach(id => {
+          batch.delete(doc(db, 'examiners', id));
+        });
+        await batch.commit();
+      }
+
+      setRecords(prev => prev.filter(item => !selectedIds.has(item.id!)));
+      setSelectedIds(new Set());
+      setBulkDeleteModalOpen(false);
+    } catch (error: any) {
+      console.error("Error bulk deleting documents: ", error);
+      alert("Failed to delete records: " + error.message);
+    } finally {
+      setIsBulkDeleting(false);
+    }
+  };
 
   useEffect(() => {
     const fetchRecords = async () => {
@@ -154,6 +250,26 @@ const ExaminerRecord: React.FC = () => {
             <h2 className="text-2xl font-bold text-brand-900">Examiner Records ({records.length})</h2>
             <button onClick={exportToCSV} className="bg-brand-600 text-white px-4 py-2 rounded hover:bg-brand-700 shadow">Export CSV</button>
         </div>
+
+        {/* Delete Confirmation Modal */}
+        <DeleteConfirmationModal
+          isOpen={deleteModalOpen}
+          onClose={() => setDeleteModalOpen(false)}
+          onConfirm={confirmDelete}
+          isDeleting={isDeleting}
+          title="Delete Examiner Record"
+          message="Are you sure you want to permanently delete this examiner record? This action cannot be undone."
+        />
+
+        {/* Bulk Delete Confirmation Modal */}
+        <DeleteConfirmationModal
+          isOpen={bulkDeleteModalOpen}
+          onClose={() => setBulkDeleteModalOpen(false)}
+          onConfirm={confirmBulkDelete}
+          isDeleting={isBulkDeleting}
+          title="Delete Examiner Records"
+          message={`Are you sure you want to permanently delete ${selectedIds.size} selected records? This action cannot be undone.`}
+        />
       
       {/* Container with horizontal and vertical scroll */}
       <div className="bg-white rounded-lg shadow w-full border border-gray-200 flex-grow overflow-hidden flex flex-col">
@@ -161,6 +277,15 @@ const ExaminerRecord: React.FC = () => {
             <table className="min-w-max divide-y divide-gray-200 text-xs relative">
             <thead className="bg-brand-50 sticky top-0 z-20 shadow-sm">
                 <tr>
+                <th className="px-3 py-3 text-left font-bold text-brand-800 uppercase tracking-wider whitespace-nowrap border-b border-r border-gray-200 sticky left-0 bg-brand-50 z-30 flex items-center gap-2 min-w-[120px]">
+                    <input 
+                      type="checkbox" 
+                      onChange={handleSelectAll}
+                      checked={records.length > 0 && selectedIds.size === records.length}
+                      className="form-checkbox h-4 w-4 text-brand-600 transition duration-150 ease-in-out"
+                    />
+                    Action
+                </th>
                 {columns.map((col, idx) => (
                     <th key={idx} className="px-3 py-3 text-left font-bold text-brand-800 uppercase tracking-wider whitespace-nowrap border-b border-r border-gray-200 last:border-r-0 bg-brand-50">
                         {col.label}
@@ -170,7 +295,24 @@ const ExaminerRecord: React.FC = () => {
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
                 {records.map((item, rowIdx) => (
-                <tr key={item.id || rowIdx} className="hover:bg-yellow-50 transition duration-150">
+                <tr key={item.id || rowIdx} className={`hover:bg-yellow-50 transition duration-150 ${selectedIds.has(item.id!) ? 'bg-blue-50' : ''}`}>
+                    <td className="px-3 py-2 whitespace-nowrap border-r border-gray-100 sticky left-0 bg-white z-10 shadow-sm border-b flex items-center gap-3">
+                        <input 
+                          type="checkbox" 
+                          checked={selectedIds.has(item.id!)}
+                          onChange={() => handleSelectRow(item.id!)}
+                          className="form-checkbox h-4 w-4 text-brand-600 transition duration-150 ease-in-out"
+                        />
+                        <button
+                            onClick={() => handleDelete(item.id!)}
+                            className="bg-red-100 text-red-600 p-1.5 rounded hover:bg-red-200 transition"
+                            title="Delete"
+                        >
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                        </button>
+                    </td>
                     {columns.map((col, colIdx) => {
                         const val = (item as any)[col.key];
                         return (
@@ -200,6 +342,21 @@ const ExaminerRecord: React.FC = () => {
             </table>
         </div>
       </div>
+
+      {/* Bulk Delete Button Footer */}
+      {selectedIds.size > 0 && (
+        <div className="mt-4 flex justify-center pb-8">
+            <button 
+                onClick={handleBulkDelete}
+                className="bg-red-600 text-white px-4 py-2 rounded shadow hover:bg-red-700 font-bold text-sm transition transform hover:scale-105 flex items-center gap-2"
+            >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+                Delete All ({selectedIds.size})
+            </button>
+        </div>
+      )}
     </div>
   );
 };
