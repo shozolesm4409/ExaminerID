@@ -11,6 +11,18 @@ interface SubjectSetting {
   percent: number; // The "Persen" field
 }
 
+// --- Constants ---
+
+const SUBJECT_KEY_MAP: {[key: string]: keyof ExaminerData} = {
+  'English': 'englishMarks',
+  'Bangla': 'banglaMarks',
+  'Physics': 'physicsMarks',
+  'Chemistry': 'chemistryMarks',
+  'Math': 'mathMarks',
+  'Biology': 'biologyMarks',
+  'ICT': 'ictMarks'
+};
+
 // --- Components ---
 
 // Multi-Select Dropdown Component
@@ -126,13 +138,13 @@ const FilterExaminer: React.FC = () => {
 
   // Subject Settings State
   const [subjectSettings, setSubjectSettings] = useState<SubjectSetting[]>([
-    { id: 1, name: 'English', percent: 60 },
-    { id: 2, name: 'Bangla', percent: 50 },
-    { id: 3, name: 'Physics', percent: 50 },
-    { id: 4, name: 'Chemistry', percent: 50 },
-    { id: 5, name: 'Math', percent: 50 },
-    { id: 6, name: 'Biology', percent: 50 },
-    { id: 7, name: 'ICT', percent: 50 },
+    { id: 1, name: 'English', percent: 59 },
+    { id: 2, name: 'Bangla', percent: 49 },
+    { id: 3, name: 'Physics', percent: 49 },
+    { id: 4, name: 'Chemistry', percent: 49 },
+    { id: 5, name: 'Math', percent: 49 },
+    { id: 6, name: 'Biology', percent: 49 },
+    { id: 7, name: 'ICT', percent: 49 },
   ]);
   const [selectedSubjectCheckboxes, setSelectedSubjectCheckboxes] = useState<string[]>([]);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
@@ -325,16 +337,7 @@ const FilterExaminer: React.FC = () => {
                 const threshold = setting ? setting.percent : 0;
 
                 // Map subject name to key
-                const keyMap: {[key: string]: keyof ExaminerData} = {
-                    'English': 'englishMarks',
-                    'Bangla': 'banglaMarks',
-                    'Physics': 'physicsMarks',
-                    'Chemistry': 'chemistryMarks',
-                    'Math': 'mathMarks',
-                    'Biology': 'biologyMarks',
-                    'ICT': 'ictMarks'
-                };
-                const key = keyMap[subjectName];
+                const key = SUBJECT_KEY_MAP[subjectName];
                 const marks = item[key];
 
                 // Check if marks exist and are greater than threshold
@@ -638,16 +641,7 @@ const FilterExaminer: React.FC = () => {
                         <td className="px-3 py-2 whitespace-nowrap">{item.selectedSubject}</td>
                         <td className="px-3 py-2 whitespace-nowrap">{item.checkScriptsCampus}</td>
                         {selectedSubjectCheckboxes.map(subject => {
-                            const keyMap: {[key: string]: keyof ExaminerData} = {
-                                'English': 'englishMarks',
-                                'Bangla': 'banglaMarks',
-                                'Physics': 'physicsMarks',
-                                'Chemistry': 'chemistryMarks',
-                                'Math': 'mathMarks',
-                                'Biology': 'biologyMarks',
-                                'ICT': 'ictMarks'
-                            };
-                            const key = keyMap[subject];
+                            const key = SUBJECT_KEY_MAP[subject];
                             const val = item[key];
                             
                             // Determine color based on settings

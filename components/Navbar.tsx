@@ -44,6 +44,7 @@ const Navbar: React.FC = () => {
               <div className={`absolute left-0 mt-2 w-48 bg-white text-gray-800 rounded-md shadow-lg py-1 ${profileOpen || 'group-hover:block hidden'}`}>
                 <Link to="/profile/view" className="block px-4 py-2 hover:bg-gray-100">View Profile</Link>
                 <Link to="/profile/update" className="block px-4 py-2 hover:bg-gray-100">Update Profile</Link>
+                <Link to="/profile/result" className="block px-4 py-2 hover:bg-gray-100">View Result</Link>
               </div>
             </div>
 
@@ -96,6 +97,8 @@ const Navbar: React.FC = () => {
         <div className="md:hidden bg-brand-800">
             <Link to="/" className="block px-4 py-2 hover:bg-brand-700">Home</Link>
             <Link to="/profile/view" className="block px-4 py-2 hover:bg-brand-700">Profile</Link>
+            <Link to="/profile/update" className="block px-4 py-2 hover:bg-brand-700">Update Profile</Link>
+            <Link to="/profile/result" className="block px-4 py-2 hover:bg-brand-700">Result</Link>
             <Link to="/campus" className="block px-4 py-2 hover:bg-brand-700">Campus</Link>
             <Link to="/payment/list" className="block px-4 py-2 hover:bg-brand-700">Payment</Link>
             <Link to="/program" className="block px-4 py-2 hover:bg-brand-700">Program</Link>

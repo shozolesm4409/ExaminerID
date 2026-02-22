@@ -7,17 +7,22 @@ import Footer from './components/Footer';
 import Home from './pages/Home';
 import Registration from './pages/Registration';
 import Login from './pages/Login';
+import Campus from './pages/user/Campus';
 import AdminLayout from './pages/admin/AdminLayout';
 import Remarking from './pages/admin/Remarking';
 import ExaminerRecord from './pages/admin/ExaminerRecord';
 import ContentManage from './pages/admin/ContentManage';
 import RegistrationManage from './pages/admin/RegistrationManage';
+import ESMCampusManage from './pages/admin/ESMCampusManage';
 import ExaminerSearch from './pages/admin/ExaminerSearch';
 import ViewProfile from './pages/admin/ViewProfile';
 import ExcelUpload from './pages/admin/ExcelUpload';
 import GenerateTPin from './pages/admin/GenerateTPin';
-
 import FilterExaminer from './pages/admin/FilterExaminer';
+import UserViewProfile from './pages/user/UserViewProfile';
+import UserUpdateProfile from './pages/user/UserUpdateProfile';
+import UserResult from './pages/user/UserResult';
+import UpdateProfileRequest from './pages/admin/UpdateProfileRequest';
 
 // Layout for public pages
 const PublicLayout = () => (
@@ -55,12 +60,13 @@ const App: React.FC = () => {
         <Route element={<PublicLayout />}>
           <Route path="/" element={<Home />} />
           <Route path="/registration" element={<Registration />} />
-          <Route path="/campus" element={<Placeholder title="Campus Info" />} />
+          <Route path="/campus" element={<Campus />} />
           <Route path="/program" element={<Placeholder title="Programs" />} />
           <Route path="/notice" element={<Placeholder title="Notices" />} />
           <Route path="/faq" element={<Placeholder title="Frequently Asked Questions" />} />
-          <Route path="/profile/view" element={<Placeholder title="View Profile" />} />
-          <Route path="/profile/update" element={<Placeholder title="Update Profile" />} />
+          <Route path="/profile/view" element={<UserViewProfile />} />
+          <Route path="/profile/update" element={<UserUpdateProfile />} />
+          <Route path="/profile/result" element={<UserResult />} />
           <Route path="/payment/list" element={<Placeholder title="Payment History" />} />
           <Route path="/payment/apply" element={<Placeholder title="Apply for Payment" />} />
           <Route path="/login" element={<Login />} />
@@ -73,6 +79,7 @@ const App: React.FC = () => {
           <Route path="records" element={<ExaminerRecord />} />
           <Route path="management" element={<ContentManage />} />
           <Route path="registration-manage" element={<RegistrationManage />} />
+          <Route path="esm-campus" element={<ESMCampusManage />} />
           
           {/* View Profile (Read Only) */}
           <Route path="view-profile" element={<ViewProfile />} />
@@ -86,6 +93,7 @@ const App: React.FC = () => {
           <Route path="generate-tpin" element={<GenerateTPin />} />
           <Route path="upload" element={<ExcelUpload />} />
           <Route path="filter-examiner" element={<FilterExaminer />} />
+          <Route path="update-profile-request" element={<UpdateProfileRequest />} />
         </Route>
       </Routes>
     </Router>

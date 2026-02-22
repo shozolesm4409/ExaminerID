@@ -48,6 +48,13 @@ const InputField = ({ label, name, data, onChange, type = "text", required = fal
   </div>
 );
 
+const SUBJECT_OPTIONS = ["Bangla", "English", "BGS", "Religion", "Physics", "Chemistry", "Math", "Biology", "Statistics", "ICT"];
+const CAMPUS_OPTIONS = ["Farmgate", "Motijheel", "Cantonment", "Bakshibazar Campus (Only for female)", "Chawkbazar(ctg)", "Khulna", "Rajshahi", "Mymensingh", "Online"];
+const BOARD_OPTIONS = ["Dhaka", "Barisal", "Chittagong", "Comilla", "Jessore", "Mymensingh", "Rajshahi", "Sylhet", "Dinajpur", "Technical", "Madrasah"];
+const DISTRICT_OPTIONS = [
+  "Bagerhat", "Bandarban", "Barguna", "Barisal", "Bhola", "Bogra", "Brahmanbaria", "Chandpur", "Chapainawabganj", "Chittagong", "Chuadanga", "Comilla", "Cox's Bazar", "Dhaka", "Dinajpur", "Faridpur", "Feni", "Gaibandha", "Gazipur", "Gopalganj", "Habiganj", "Jamalpur", "Jessore", "Jhalokati", "Jhenaidah", "Joypurhat", "Khagrachhari", "Khulna", "Kishoreganj", "Kurigram", "Kushtia", "Lakshmipur", "Lalmonirhat", "Madaripur", "Magura", "Manikganj", "Meherpur", "Moulvibazar", "Munshiganj", "Mymensingh", "Naogaon", "Narail", "Narayanganj", "Narsingdi", "Natore", "Netrokona", "Nilphamari", "Noakhali", "Pabna", "Panchagarh", "Patuakhali", "Pirojpur", "Rajbari", "Rajshahi", "Rangamati", "Rangpur", "Satkhira", "Shariatpur", "Sherpur", "Sirajganj", "Sunamganj", "Sylhet", "Tangail", "Thakurgaon"
+];
+
 // -- Main Component --
 
 const Registration: React.FC = () => {
@@ -198,7 +205,7 @@ const Registration: React.FC = () => {
               <InputField label="Facebook ID (Link)" name="facebookId" data={formData} onChange={handleChange} />
               <InputField label="Teams/Skype ID" name="teamsSkypeId" data={formData} onChange={handleChange} />
               <InputField label="Present Area" name="presentArea" data={formData} onChange={handleChange} />
-              <InputField label="Home District" name="homeDistrict" data={formData} onChange={handleChange} />
+              <InputField label="Home District" name="homeDistrict" options={DISTRICT_OPTIONS} data={formData} onChange={handleChange} />
             </>
           )}
 
@@ -211,7 +218,7 @@ const Registration: React.FC = () => {
               <InputField label="HSC Batch" name="hscBatch" data={formData} onChange={handleChange} required />
               <InputField label="HSC Roll" name="hscRoll" data={formData} onChange={handleChange} />
               <InputField label="HSC Reg" name="hscReg" data={formData} onChange={handleChange} />
-              <InputField label="HSC Board" name="hscBoard" data={formData} onChange={handleChange} />
+              <InputField label="HSC Board" name="hscBoard" options={BOARD_OPTIONS} data={formData} onChange={handleChange} />
               <InputField label="HSC GPA" name="hscGpa" data={formData} onChange={handleChange} />
               <InputField label="College Name" name="collegeName" data={formData} onChange={handleChange} />
               <InputField label="Medium upto HSC" name="mediumHsc" options={['Bangla', 'English']} data={formData} onChange={handleChange} />
@@ -250,13 +257,13 @@ const Registration: React.FC = () => {
             <>
                 <SectionHeader title="Script Checking Preferences" />
                 <InputField label="Preferred Way" name="scriptCheckMethod" options={['Online', 'Physical', 'Both']} data={formData} onChange={handleChange} required />
-                <InputField label="Subject Pref 1" name="subject1" data={formData} onChange={handleChange} />
-                <InputField label="Subject Pref 2" name="subject2" data={formData} onChange={handleChange} />
-                <InputField label="Subject Pref 3" name="subject3" data={formData} onChange={handleChange} />
-                <InputField label="Subject Pref 4" name="subject4" data={formData} onChange={handleChange} />
-                <InputField label="Subject Pref 5" name="subject5" data={formData} onChange={handleChange} />
-                <InputField label="Version Interested" name="versionInterested" options={['Bangla', 'English']} data={formData} onChange={handleChange} />
-                <InputField label="Physical Check Campus" name="checkScriptsCampus" data={formData} onChange={handleChange} />
+                <InputField label="Subject Pref 1" name="subject1" options={SUBJECT_OPTIONS} data={formData} onChange={handleChange} />
+                <InputField label="Subject Pref 2" name="subject2" options={SUBJECT_OPTIONS} data={formData} onChange={handleChange} />
+                <InputField label="Subject Pref 3" name="subject3" options={SUBJECT_OPTIONS} data={formData} onChange={handleChange} />
+                <InputField label="Subject Pref 4" name="subject4" options={SUBJECT_OPTIONS} data={formData} onChange={handleChange} />
+                <InputField label="Subject Pref 5" name="subject5" options={SUBJECT_OPTIONS} data={formData} onChange={handleChange} />
+                <InputField label="Version Interested" name="versionInterested" options={['Bangla', 'English', 'Both']} data={formData} onChange={handleChange} />
+                <InputField label="Physical Check Campus" name="checkScriptsCampus" options={CAMPUS_OPTIONS} data={formData} onChange={handleChange} />
                 <InputField label="Preferred Shift (Max 2)" name="checkScriptsShift" data={formData} onChange={handleChange} />
             </>
           )}
@@ -276,7 +283,7 @@ const Registration: React.FC = () => {
           {/* Misc */}
           <SectionHeader title="Miscellaneous" />
           {config.showReference && <InputField label="Reference" name="reference" data={formData} onChange={handleChange} />}
-          <InputField label="Form Fill-up Campus" name="formFillUpCampus" data={formData} onChange={handleChange} />
+          <InputField label="Form Fill-up Campus" name="formFillUpCampus" options={CAMPUS_OPTIONS} data={formData} onChange={handleChange} />
           
           {/* File Uploads */}
           {config.showUploads && (

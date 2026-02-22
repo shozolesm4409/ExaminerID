@@ -102,4 +102,19 @@ export interface ContentItem {
   isVisible: boolean;
 }
 
+export interface CampusInfo {
+  id?: string;
+  sl: number;
+  isActive: boolean;
+  cardHeading: string;
+  phone1: string;
+  phone2: string;
+  popupHeading: string;
+  address: string;
+  mapIframe: string;
+  whatsappTitle: string;
+  whatsappNumber: string;
+  category: string; // 'Inside Dhaka', 'Outside Dhaka', 'Online', etc.
+}
+
 export const ADMIN_EMAIL = "test.123@udvash.net";

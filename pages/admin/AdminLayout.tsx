@@ -6,6 +6,8 @@ const AdminLayout: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const [checkingAuth, setCheckingAuth] = useState(true);
+  const [isExaminerProfileOpen, setIsExaminerProfileOpen] = useState(false);
+  const [isLandingPageOpen, setIsLandingPageOpen] = useState(false);
 
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged((user) => {
@@ -16,6 +18,29 @@ const AdminLayout: React.FC = () => {
     });
     return () => unsubscribe();
   }, [navigate]);
+
+  // Auto-open dropdown if on a child route
+  useEffect(() => {
+    if (
+      location.pathname.includes('/admin/remarking') ||
+      location.pathname.includes('/admin/records') ||
+      location.pathname.includes('/admin/filter-examiner') ||
+      location.pathname.includes('/admin/view-profile') ||
+      location.pathname.includes('/admin/update-profile') ||
+      location.pathname.includes('/admin/generate-tpin') ||
+      location.pathname.includes('/admin/update-profile-request')
+    ) {
+      setIsExaminerProfileOpen(true);
+    }
+
+    if (
+      location.pathname.includes('/admin/registration-manage') ||
+      location.pathname.includes('/admin/management') ||
+      location.pathname.includes('/admin/esm-campus')
+    ) {
+      setIsLandingPageOpen(true);
+    }
+  }, [location.pathname]);
 
   const handleLogout = async () => {
     try {
@@ -40,18 +65,62 @@ const AdminLayout: React.FC = () => {
           <h2 className="text-2xl font-bold tracking-wider">Admin Panel</h2>
         </div>
         <nav className="mt-2 flex-grow space-y-1">
-          <Link to="/admin/remarking" className={`block px-6 py-.5 transition-colors ${isActive('/admin/remarking')}`}>Remarking</Link>
-          <Link to="/admin/records" className={`block px-6 py-.5 transition-colors ${isActive('/admin/records')}`}>Examiner Records</Link>
-          <Link to="/admin/filter-examiner" className={`block px-6 py-1 transition-colors ${isActive('/admin/filter-examiner')}`}>Filter Examiner</Link>
-        
-          <Link to="/admin/view-profile" className={`block px-6 py-.5 transition-colors ${isActive('/admin/view-profile')}`}>View Profile</Link>
-          <Link to="/admin/update-profile" className={`block px-6 py-.5 transition-colors ${isActive('/admin/update-profile')}`}>Update Profile</Link> 
-          <Link to="/admin/generate-tpin" className={`block px-6 py-1 transition-colors ${isActive('/admin/generate-tpin')}`}>Generate T-Pin</Link>
+          {/* Examiner Profile Dropdown */}
+          <div>
+            <button
+              onClick={() => setIsExaminerProfileOpen(!isExaminerProfileOpen)}
+              className="w-full flex items-center justify-between px-6 py-2 text-gray-300 hover:bg-brand-800 hover:text-white transition-colors"
+            >
+              <span className="font-medium">Examiner Profile</span>
+              <svg
+                className={`w-4 h-4 transition-transform ${isExaminerProfileOpen ? 'rotate-180' : ''}`}
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              </svg>
+            </button>
+            {isExaminerProfileOpen && (
+              <div className="bg-brand-950 py-1">
+                <Link to="/admin/remarking" className={`block pl-10 pr-6 py-1 text-sm transition-colors ${isActive('/admin/remarking')}`}>Remarking</Link>
+                <Link to="/admin/records" className={`block pl-10 pr-6 py-1 text-sm transition-colors ${isActive('/admin/records')}`}>Examiner Records</Link>
+                <Link to="/admin/filter-examiner" className={`block pl-10 pr-6 py-1 text-sm transition-colors ${isActive('/admin/filter-examiner')}`}>Filter Examiner</Link>
+                <Link to="/admin/view-profile" className={`block pl-10 pr-6 py-1 text-sm transition-colors ${isActive('/admin/view-profile')}`}>View Profile</Link>
+                <Link to="/admin/update-profile" className={`block pl-10 pr-6 py-1 text-sm transition-colors ${isActive('/admin/update-profile')}`}>Update Profile</Link>
+                <Link to="/admin/update-profile-request" className={`block pl-10 pr-6 py-1 text-sm transition-colors ${isActive('/admin/update-profile-request')}`}>Update Profile Request</Link>
+                <Link to="/admin/generate-tpin" className={`block pl-10 pr-6 py-1 text-sm transition-colors ${isActive('/admin/generate-tpin')}`}>Generate T-PIN</Link>
+              </div>
+            )}
+          </div>
+          
+          {/* Landing Page Dropdown */}
+          <div>
+            <button
+              onClick={() => setIsLandingPageOpen(!isLandingPageOpen)}
+              className="w-full flex items-center justify-between px-6 py-2 text-gray-300 hover:bg-brand-800 hover:text-white transition-colors"
+            >
+              <span className="font-medium">Landing Page</span>
+              <svg
+                className={`w-4 h-4 transition-transform ${isLandingPageOpen ? 'rotate-180' : ''}`}
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              </svg>
+            </button>
+            {isLandingPageOpen && (
+              <div className="bg-brand-950 py-1">
+                <Link to="/admin/registration-manage" className={`block pl-10 pr-6 py-1 text-sm transition-colors ${isActive('/admin/registration-manage')}`}>Registration Manage</Link>
+                <Link to="/admin/management" className={`block pl-10 pr-6 py-1 text-sm transition-colors ${isActive('/admin/management')}`}>Content Manage</Link>
+                <Link to="/admin/esm-campus" className={`block pl-10 pr-6 py-1 text-sm transition-colors ${isActive('/admin/esm-campus')}`}>ESM Campus</Link>
+              </div>
+            )}
+          </div>
           
           <div className="my-2 border-t border-brand-800 opacity-50"></div>
           <Link to="/admin/upload" className={`block px-6 py-1 transition-colors ${isActive('/admin/upload')}`}>Excel Upload</Link>
-          <Link to="/admin/registration-manage" className={`block px-6 py-1 transition-colors ${isActive('/admin/registration-manage')}`}>Registration Manage</Link>
-          <Link to="/admin/management" className={`block px-6 py-1 transition-colors ${isActive('/admin/management')}`}>Content Manage</Link>
         </nav>
         <div className="p-3 border-t border-brand-800 flex-shrink-0">
           <button 
