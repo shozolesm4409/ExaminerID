@@ -8,12 +8,14 @@ import Home from './pages/Home';
 import Registration from './pages/Registration';
 import Login from './pages/Login';
 import Campus from './pages/user/Campus';
+import Faq from './pages/user/Faq';
 import AdminLayout from './pages/admin/AdminLayout';
 import Remarking from './pages/admin/Remarking';
 import ExaminerRecord from './pages/admin/ExaminerRecord';
 import ContentManage from './pages/admin/ContentManage';
 import RegistrationManage from './pages/admin/RegistrationManage';
 import ESMCampusManage from './pages/admin/ESMCampusManage';
+import FaqManage from './pages/admin/FaqManage';
 import ExaminerSearch from './pages/admin/ExaminerSearch';
 import ViewProfile from './pages/admin/ViewProfile';
 import ExcelUpload from './pages/admin/ExcelUpload';
@@ -63,7 +65,7 @@ const App: React.FC = () => {
           <Route path="/campus" element={<Campus />} />
           <Route path="/program" element={<Placeholder title="Programs" />} />
           <Route path="/notice" element={<Placeholder title="Notices" />} />
-          <Route path="/faq" element={<Placeholder title="Frequently Asked Questions" />} />
+          <Route path="/faq" element={<Faq />} />
           <Route path="/profile/view" element={<UserViewProfile />} />
           <Route path="/profile/update" element={<UserUpdateProfile />} />
           <Route path="/profile/result" element={<UserResult />} />
@@ -80,6 +82,7 @@ const App: React.FC = () => {
           <Route path="management" element={<ContentManage />} />
           <Route path="registration-manage" element={<RegistrationManage />} />
           <Route path="esm-campus" element={<ESMCampusManage />} />
+          <Route path="faq-manage" element={<FaqManage />} />
           
           {/* View Profile (Read Only) */}
           <Route path="view-profile" element={<ViewProfile />} />

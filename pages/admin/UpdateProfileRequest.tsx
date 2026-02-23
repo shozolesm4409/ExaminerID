@@ -32,7 +32,8 @@ const UpdateProfileRequest: React.FC = () => {
       const q = query(collection(db, 'updateRequests'), orderBy('timestamp', 'desc'));
       const snapshot = await getDocs(q);
       const data = snapshot.docs.map(d => ({ ...d.data(), id: d.id } as UpdateRequest));
-      setRequests(data);
+      // Filter client-side to avoid index issues
+      setRequests(data.filter(r => r.status === 'pending'));
     } catch (error) {
       console.error("Error fetching requests:", error);
     } finally {
@@ -63,8 +64,11 @@ const UpdateProfileRequest: React.FC = () => {
       const examinerRef = doc(db, 'examiners', req.examinerId);
       await updateDoc(examinerRef, finalUpdateData);
 
-      // 3. Delete the request
-      await deleteDoc(doc(db, 'updateRequests', req.id));
+      // 3. Update the request status to approved (Hide from list)
+      await updateDoc(doc(db, 'updateRequests', req.id), {
+        status: 'approved',
+        approvedAt: new Date().toISOString()
+      });
 
       alert("Profile updated successfully!");
       setSelectedRequest(null);
@@ -78,12 +82,17 @@ const UpdateProfileRequest: React.FC = () => {
   };
 
   const handleReject = async (req: UpdateRequest) => {
-    if (!window.confirm("Are you sure you want to reject (delete) this request?")) return;
+    if (!window.confirm("Are you sure you want to reject this request?")) return;
 
     setProcessing(true);
     try {
-      await deleteDoc(doc(db, 'updateRequests', req.id));
-      alert("Request rejected and removed.");
+      // Update status to rejected (Hide from list)
+      await updateDoc(doc(db, 'updateRequests', req.id), {
+        status: 'rejected',
+        rejectedAt: new Date().toISOString()
+      });
+      
+      alert("Request rejected.");
       setSelectedRequest(null);
       fetchRequests();
     } catch (error: any) {

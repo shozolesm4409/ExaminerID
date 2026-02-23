@@ -8,6 +8,7 @@ const ESMCampusManage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingCampus, setEditingCampus] = useState<CampusInfo | null>(null);
+  const [viewMapCampus, setViewMapCampus] = useState<CampusInfo | null>(null);
   const [formData, setFormData] = useState<Partial<CampusInfo>>({
     isActive: true,
     sl: 0,
@@ -122,7 +123,7 @@ const ESMCampusManage: React.FC = () => {
       </div>
 
       <div className="bg-white rounded-lg shadow overflow-hidden">
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto max-h-[75vh]">
           <table className="min-w-full divide-y divide-gray-200 text-sm">
             <thead className="bg-blue-600 text-white">
               <tr>
@@ -173,7 +174,7 @@ const ESMCampusManage: React.FC = () => {
                     <td className="px-4 py-2 text-center border-r border-gray-200">
                       {campus.mapIframe && (
                         <button 
-                          onClick={() => window.open(campus.mapIframe.match(/src="([^"]+)"/)?.[1] || '#', '_blank')}
+                          onClick={() => setViewMapCampus(campus)}
                           className="bg-blue-500 text-white px-2 py-1 rounded text-xs hover:bg-blue-600"
                         >
                           ViewMap
@@ -345,6 +346,41 @@ const ESMCampusManage: React.FC = () => {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+      {/* Map View Modal */}
+      {viewMapCampus && (
+        <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-2xl w-full max-w-4xl h-[80vh] flex flex-col overflow-hidden relative animate-fade-in-up">
+            <div className="bg-blue-600 text-white px-4 py-3 flex justify-between items-center flex-shrink-0">
+              <h3 className="text-lg font-bold">{viewMapCampus.cardHeading} - Map</h3>
+              <button 
+                onClick={() => setViewMapCampus(null)}
+                className="text-white hover:text-gray-200 p-1 rounded-full hover:bg-blue-700 transition"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+              </button>
+            </div>
+            <div className="flex-grow bg-gray-100 p-2">
+              {viewMapCampus.mapIframe.trim().startsWith('<') ? (
+                <div 
+                  dangerouslySetInnerHTML={{ __html: viewMapCampus.mapIframe.replace(/width="[^"]*"/, 'width="100%"').replace(/height="[^"]*"/, 'height="100%"') }} 
+                  className="w-full h-full"
+                />
+              ) : (
+                <iframe 
+                  src={viewMapCampus.mapIframe} 
+                  width="100%" 
+                  height="100%" 
+                  style={{ border: 0 }} 
+                  allowFullScreen 
+                  loading="lazy" 
+                  referrerPolicy="no-referrer-when-downgrade"
+                  title="Campus Map"
+                ></iframe>
+              )}
+            </div>
           </div>
         </div>
       )}

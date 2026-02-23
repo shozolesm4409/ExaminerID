@@ -36,7 +36,8 @@ const AdminLayout: React.FC = () => {
     if (
       location.pathname.includes('/admin/registration-manage') ||
       location.pathname.includes('/admin/management') ||
-      location.pathname.includes('/admin/esm-campus')
+      location.pathname.includes('/admin/esm-campus') ||
+      location.pathname.includes('/admin/faq-manage')
     ) {
       setIsLandingPageOpen(true);
     }
@@ -115,6 +116,7 @@ const AdminLayout: React.FC = () => {
                 <Link to="/admin/registration-manage" className={`block pl-10 pr-6 py-1 text-sm transition-colors ${isActive('/admin/registration-manage')}`}>Registration Manage</Link>
                 <Link to="/admin/management" className={`block pl-10 pr-6 py-1 text-sm transition-colors ${isActive('/admin/management')}`}>Content Manage</Link>
                 <Link to="/admin/esm-campus" className={`block pl-10 pr-6 py-1 text-sm transition-colors ${isActive('/admin/esm-campus')}`}>ESM Campus</Link>
+                <Link to="/admin/faq-manage" className={`block pl-10 pr-6 py-1 text-sm transition-colors ${isActive('/admin/faq-manage')}`}>Faq's Manage</Link>
               </div>
             )}
           </div>
